@@ -64,7 +64,7 @@ class bcolors:
 # Define global variables
 #
 ##
-config_path="/home/devmb/.config/pendoc/"
+config_path="{YOU CONFIG PATH}" #/home/user/.config/pendoc
 config_file=config_path + "data.conf"
 session_file=config_path + "session.dat"
 notes_file = "/notes.txt"
