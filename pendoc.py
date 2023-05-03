@@ -64,7 +64,7 @@ class bcolors:
 # Define global variables
 #
 ##
-config_path="{YOU CONFIG PATH}" #/home/user/.config/pendoc
+config_path={YOU CONFIG PATH}
 config_file=config_path + "data.conf"
 session_file=config_path + "session.dat"
 notes_file = "/notes.txt"
@@ -152,6 +152,9 @@ def create_enviroment(path):
     else:
         os.mkdir(new_path)
         os.mkdir(new_path+"/nmap")
+        os.mkdir(new_pach+"/exploits")
+        os.mkdir(new_path+"/scripts")
+        os.mkdir(new_path+"/images")
         open(new_path+notes_file, "w").close()
         log.info("Directory created.. you can work...")
 
