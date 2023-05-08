@@ -21,7 +21,7 @@ import shutil
 from colorlog import ColoredFormatter
 
 
-path_captures = "/home/devmb/images/captures/"
+path_captures{YOUR PATH CAPTURES}
 ##
 #Config format log.
 #
