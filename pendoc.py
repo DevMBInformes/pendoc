@@ -17,10 +17,11 @@ import sys
 import os
 import pyperclip
 import logging
+import shutil
 from colorlog import ColoredFormatter
 
 
-
+path_captures = "/home/devmb/images/captures/"
 ##
 #Config format log.
 #
@@ -75,19 +76,42 @@ notes_file = "/notes.txt"
 #
 ##
 
+
+#target
+name_machine="#name_machine#:"
+osys="#O.S#:"
+ip_actual="#ip_actual#:"
+open_ports_type="#open_ports_type#:"
+
+
+
+#machine
+name_machine_="#name_machine#:"
+osys_="#O.S#:"
+ip_actual_="#ip_actual#:"
+open_ports_type_="#open_ports_type#:"
+
+
+
+#action
 face = "#face#:"
 cmd = "#cmd#:"
 note = "#note#:"
 output = "#output#:"
+image="#image#:"
+
+
 action = "@)"
 
-
+#usuario
+#data context
 data="$)"
 context="#context#:"
 user="#user#:"
 password="#password#:"
+machine="#machine#:"
 
-
+#Data vuln
 vuln="#vuln#:"
 service="#service#:"
 description="#description#:"
@@ -152,7 +176,7 @@ def create_enviroment(path):
     else:
         os.mkdir(new_path)
         os.mkdir(new_path+"/nmap")
-        os.mkdir(new_pach+"/exploits")
+        os.mkdir(new_path+"/exploits")
         os.mkdir(new_path+"/scripts")
         os.mkdir(new_path+"/images")
         open(new_path+notes_file, "w").close()
@@ -174,6 +198,35 @@ def select_list(func1, func2, string):
             log.error("Only number is valid")
 
 
+def list_directory(dir_path:str)->list:
+    return os.listdir(dir_path)
+
+
+def ultimate_image()->str:
+    files = list_directory(path_captures)
+    date_file_more_recent = 0
+    file_more_recent = ''
+
+    # iteramos sobre la lista de archivos
+    for file in files:
+        date_created_file = os.path.getctime(os.path.join(path_captures, file))
+    
+        if date_created_file > date_file_more_recent:
+            date_file_more_recent = date_created_file
+            file_more_recent = file
+
+    # imprimimos el nombre del archivo más reciente
+    return file_more_recent
+
+def copy_image()->str:
+
+    file = ultimate_image()
+    new_path = open_session_file() + "/images/" 
+    new_path = new_path  + str(len(os.listdir(new_path)) + 1) +".png"
+    shutil.move(path_captures+file, new_path)
+    return new_path
+
+
 def list_session_exist()->tuple:
     paths = read_paths()
     session = [item.split(':')[0]+x for item in paths for x in os.listdir(item.split(':')[0])]
@@ -192,13 +245,13 @@ def open_session():
 
 
 
-def path_session():
+def path_session()->str:
     path = open_session_file() + notes_file
     if os.path.exists(path):
         return path
     else:
         log.error("The path no exists, please first make a session")
-        exit(1)
+        return "Error"
 
 
 def input_face():
@@ -211,35 +264,53 @@ def set_color(color, text):
        return color + text + bcolors.RESET_A
 
 
-def make_input(delimiter:str, msg:str):
-    return delimiter + input(items_v + msg + f":{bcolors.RED} ") + bcolors.RESET_A
+def make_input(delimiter:str, msg:str, clipboard=False, c_image=False):
+    if clipboard:
+        if c_image:
+            print(f"Copy image {msg}...")
+            return delimiter + msg
+        else:
+            input(f"{delimiter}{bcolors.GREEN}Copy {msg} to clipboard and press enter here...{bcolors.RESET_A}")
+            return delimiter + pyperclip.paste()
+    else:
+        return delimiter + input(items_v + msg + f":{bcolors.RED} ") + bcolors.RESET_A
+
 
 def input_action():
-    session = path_session()
     list_dat = []
     list_dat.append(make_input(cmd,"Input command"))
     list_dat.append(make_input(note,"Input comments"))
-    input(f"{items_v}Copy to clipboard and press enter here... ")
-    new_output = output + pyperclip.paste()
-    list_dat.append(new_output)
-    list_append(list_dat, session)
+    #input(f"{items_v}Copy to clipboard and press enter here... ")
+    #new_output = output + pyperclip.paste()
+    list_dat.append(make_input(output, "data", clipboard=True))
+    confirm = input("Copy ultimate image of clipboard, press Y/n: ")
+    if confirm == "y" or confirm == "Y":
+        list_dat.append(make_input(image, copy_image(), clipboard=True, c_image=True))
+    list_append(list_dat)
 
 
-def list_append(reg:list, session):
+def list_append(reg:list):
+    session = path_session()
+    append_file(session, action)
     for item in reg:
         append_file(session, item)
 
 def set_password():
-    session = path_session()
     list_dat = []
     list_dat.append(make_input(context, "Input the context"))
     list_dat.append(make_input(user, "Input the user"))
     list_dat.append(make_input(password, "Input the password"))
-    list_append(list_dat, session)
+    list_append(list_dat)
 
 
 def set_vuln():
-    pass
+    list_dat = []
+    list_dat.append(make_input(vuln,"Input number vuln with format CVE-"))
+    list_dat.append(make_input(service, "Service or context of vuln"))
+    list_dat.append(make_input(description, "Describe"))
+    list_dat.append(make_input(url, "URL", clipboard=True))
+    list_dat.append(make_input(exploit, "Intro name of exploit"))
+
 
 def print_path():
     path = open_session_file()
@@ -267,7 +338,9 @@ switch_arg = {
          "path"  : (print_path,"Get path the actual session to clipboard"),
          "pass" : (set_password, "Insert a user, password and context"),
          "vuln" : (set_vuln, "Inser a vulnerability"),
-         "help" : (print_help, "Show this menu")
+         "help" : (print_help, "Show this menu"),
+         "password" : (set_password, "Set user and password"),
+         "copyimage" : (copy_image, "copy image")
          }
 if len(sys.argv) > 1:
     valor = switch_arg.get(sys.argv[1])
