@@ -7,8 +7,6 @@
 #info: dev.manuel.barros@gmail.com
 #----------------------------------
 
-
-
 ##
 #Imports
 #
@@ -18,6 +16,7 @@ import os
 import pyperclip
 import logging
 import shutil
+from enum import Enum
 from colorlog import ColoredFormatter
 
 
@@ -71,56 +70,67 @@ session_file=config_path + "session.dat"
 notes_file = "/notes.txt"
 
 
-##
-#Delimiter strings
+###
+#
+#GROUP OF ENUMS
 #
 ##
 
+class e_target(Enum):
+    #target
+    name_machine="#name_machine#:"
+    os="#O.S#:"
+    ip="#ip#:"
+    open_ports_type="#open_ports_type#:"
+        
 
-#target
-name_machine="#name_machine#:"
-osys="#O.S#:"
-ip_actual="#ip_actual#:"
-open_ports_type="#open_ports_type#:"
+class e_face(Enum):
+    face="#face#:"
+
+class e_machine(Enum):
+    #machine
+    name_machine_="#name_machine#:"
+    osys_="#O.S#:"
+    ip_actual_="#ip_actual#:"
+    open_ports_type_="#open_ports_type#:"
+
+class e_types(Enum):
+    action="@)"
+    permanet="$-)"
+
+class e_action(Enum):
+    #action
+    cmd = "#cmd#:"
+    note = "#note#:"
+    output = "#output#:"
+    image="#image#:"
 
 
-
-#machine
-name_machine_="#name_machine#:"
-osys_="#O.S#:"
-ip_actual_="#ip_actual#:"
-open_ports_type_="#open_ports_type#:"
-
+class e_password(Enum):
+    #data context
+    context="#context#:"
+    user="#user#:"
+    password="#password#:"
 
 
-#action
-face = "#face#:"
-cmd = "#cmd#:"
-note = "#note#:"
-output = "#output#:"
-image="#image#:"
-
-
-action = "@)"
-
-#usuario
-#data context
-data="$)"
-context="#context#:"
-user="#user#:"
-password="#password#:"
-machine="#machine#:"
-
-#Data vuln
-vuln="#vuln#:"
-service="#service#:"
-description="#description#:"
-url="#url_info#:"
-exploit="#exploit#:"
+class e_vuln(Enum):
+    #Data vuln
+    vuln="#vuln#:"
+    service="#service#:"
+    description="#description#:"
+    url="#url_info#:"
+    exploit="#exploit#:"
 
 
 items_v=f"{bcolors.VIOLET}[{bcolors.RESET_A}*{bcolors.VIOLET}]{bcolors.GREEN} " 
 
+
+
+###
+#
+#Functions workings whit session
+#
+###
 def open_session_file()->str:
     content = open(session_file, mode="r")
     result = content.read()
@@ -140,6 +150,26 @@ def clear_session_file():
     write_file(session_file,"")
     log.debug(f"Delete session")
 
+def path_session()->str:
+    path = open_session_file() + notes_file
+    if os.path.exists(path):
+        return path
+    else:
+        log.error("The path no exists, please first make a session")
+        return "Error"
+
+
+def create_session():
+    select_list(list_paths, create_enviroment, "number type session")
+
+def open_session():
+    select_list(list_session_exist, write_session_file,"number session")
+
+##
+#
+#Function workings whit files and path
+#
+##
 def write_file(path:str, content:str)->bool:
     file = open(path, mode="w")
     file.write(content)
@@ -167,6 +197,12 @@ def list_paths()->tuple:
     return len(paths), paths
     
 
+###
+#
+#
+#
+###
+
 def create_enviroment(path):
     session_name = input("Plase, input name of session: ")
     new_path = path +session_name
@@ -181,6 +217,25 @@ def create_enviroment(path):
         os.mkdir(new_path+"/images")
         open(new_path+notes_file, "w").close()
         log.info("Directory created.. you can work...")
+
+
+###
+#
+#Generic Funtions
+#
+###
+def print_path():
+    path = open_session_file()
+    pyperclip.copy(path)
+    log.info(f"The path: {path} is in clipboard")
+
+def error_select():
+    log.error("No valid option")
+    print_help()
+
+def print_help():
+    for index, value  in switch_arg.items():
+        print(f"{bcolors.GREEN}pendoc.py {bcolors.RED}{index:10} {bcolors.RESET_A}: {bcolors.GREEN}{value[1]}{bcolors.RESET_A}")
 
 
 def select_list(func1, func2, string):
@@ -218,8 +273,9 @@ def ultimate_image()->str:
     # imprimimos el nombre del archivo más reciente
     return file_more_recent
 
-def copy_image()->str:
 
+
+def copy_image()->str:
     file = ultimate_image()
     new_path = open_session_file() + "/images/" 
     new_path = new_path  + str(len(os.listdir(new_path)) + 1) +".png"
@@ -237,29 +293,6 @@ def list_session_exist()->tuple:
     return len(session), session
 
 
-def create_session():
-    select_list(list_paths, create_enviroment, "number type session")
-
-def open_session():
-    select_list(list_session_exist, write_session_file,"number session")
-
-
-
-def path_session()->str:
-    path = open_session_file() + notes_file
-    if os.path.exists(path):
-        return path
-    else:
-        log.error("The path no exists, please first make a session")
-        return "Error"
-
-
-def input_face():
-    new_face = make_input(face, "Input the name of face")
-    session = path_session()
-    append_file(session, new_face)
-
-
 def set_color(color, text):
        return color + text + bcolors.RESET_A
 
@@ -275,57 +308,84 @@ def make_input(delimiter:str, msg:str, clipboard=False, c_image=False):
     else:
         return delimiter + input(items_v + msg + f":{bcolors.RED} ") + bcolors.RESET_A
 
-
-def input_action():
-    list_dat = []
-    list_dat.append(make_input(cmd,"Input command"))
-    list_dat.append(make_input(note,"Input comments"))
-    #input(f"{items_v}Copy to clipboard and press enter here... ")
-    #new_output = output + pyperclip.paste()
-    list_dat.append(make_input(output, "data", clipboard=True))
-    confirm = input("Copy ultimate image of clipboard, press Y/n: ")
-    if confirm == "y" or confirm == "Y":
-        list_dat.append(make_input(image, copy_image(), clipboard=True, c_image=True))
-    list_append(list_dat)
-
-
-def list_append(reg:list):
+def list_append(reg:list, mark:e_types):
     session = path_session()
-    append_file(session, action)
+    append_file(session, mark.value)
     for item in reg:
         append_file(session, item)
 
+
+
+###
+#
+#SETS
+#
+##
+
+
+def input_face():
+    list_dat = []
+    list_dat.append(make_input(e_face.face.value, "Input the name of face"))
+    print(e_face.face.value)
+    list_append(list_dat, e_types.action)
+
+
+def input_action():
+    list_dat = []
+    list_dat.append(make_input(e_action.cmd.value,"Input command"))
+    list_dat.append(make_input(e_action.note.value,"Input comments"))
+    #input(f"{items_v}Copy to clipboard and press enter here... ")
+    #new_output = output + pyperclip.paste()
+    list_dat.append(make_input(e_action.output.value, "data", clipboard=True))
+    confirm = input("Copy ultimate image of clipboard, press Y/n: ")
+    if confirm == "y" or confirm == "Y":
+        list_dat.append(make_input(e_action.image.value, copy_image(), clipboard=True, c_image=True))
+    list_append(list_dat, e_types.action)
+
 def set_password():
     list_dat = []
-    list_dat.append(make_input(context, "Input the context"))
-    list_dat.append(make_input(user, "Input the user"))
-    list_dat.append(make_input(password, "Input the password"))
-    list_append(list_dat)
+    list_dat.append(make_input(e_password.context.value, "Input the context"))
+    list_dat.append(make_input(e_password.user.value, "Input the user"))
+    list_dat.append(make_input(e_password.password.value, "Input the password"))
+    list_append(list_dat, e_types.action)
+
 
 
 def set_vuln():
     list_dat = []
-    list_dat.append(make_input(vuln,"Input number vuln with format CVE-"))
-    list_dat.append(make_input(service, "Service or context of vuln"))
-    list_dat.append(make_input(description, "Describe"))
-    list_dat.append(make_input(url, "URL", clipboard=True))
-    list_dat.append(make_input(exploit, "Intro name of exploit"))
-
-
-def print_path():
-    path = open_session_file()
-    pyperclip.copy(path)
-    log.info(f"The path: {path} is in clipboard")
-
-def error_select():
-    log.error("No valid option")
-    print_help()
+    list_dat.append(make_input(e_vuln.vuln.value,"Input number vuln with format CVE-"))
+    list_dat.append(make_input(e_vuln.service.value, "Service or context of vuln"))
+    list_dat.append(make_input(e_vuln.description.value, "Describe"))
+    list_dat.append(make_input(e_vuln.url.value, "URL", clipboard=True))
+    list_dat.append(make_input(e_vuln.exploit.value, "Intro name of exploit"))
+    list_append(list_dat, e_types.action)
 
 
 
-def print_help():
-    for index, value  in switch_arg.items():
-        print(f"{bcolors.GREEN}pendoc.py {bcolors.RED}{index:10} {bcolors.RESET_A}: {bcolors.GREEN}{value[1]}{bcolors.RESET_A}")
+def set_machine():
+    pass
+
+def set_target_name():
+    pass
+
+def set_target_os():
+    pass
+
+def set_target_ip():
+    pass
+
+
+def set_target_ports():
+    pass
+
+
+
+###
+#
+#INIT
+#
+###
+
 
 switch_arg = {
          "new" : (create_session, "Create a new session"),
@@ -340,7 +400,6 @@ switch_arg = {
          "vuln" : (set_vuln, "Inser a vulnerability"),
          "help" : (print_help, "Show this menu"),
          "password" : (set_password, "Set user and password"),
-         "copyimage" : (copy_image, "copy image")
          }
 if len(sys.argv) > 1:
     valor = switch_arg.get(sys.argv[1])
