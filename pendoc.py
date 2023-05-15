@@ -66,15 +66,15 @@ def list_simple_dict(dictonary:dict, value_filter='', output=True)->tuple:
 #                       GLOBAL VARIABLES
 #########################################################################################
 
-user_name='{YOUR_USER_NAME}'
-file_data="data2.conf"
+user_name="devmb"
+file_data="data.conf"
 file_session="session.dat"
 notes_file = "notes.txt"
 
 config_path = os.path.join("/home",user_name, ".config","pendoc")
 config_file = os.path.join(config_path, file_data)
 session_file = os.path.join(config_path, file_session)
-path_captures=os.path.join("/home", user_name, "images", "captures")
+path_captures=os.path.join("/home", user_name, "Pictures")
 path_image = 'images'
 dirs_create = ['nmap', path_image, 'scripts', 'others']
 p = log.progress('Pendoc 0.2v')
@@ -91,7 +91,7 @@ config = {}
 
 path = {
         'name' : ["Input name of new path", "input", ''],
-        'path' : ["Input the new path", "input", cmp_path_check],
+        'path' : ["Input the new path", "input", ''],
         }
 session = {
         'name' : ["Input nade of session", 'input', cmp_path_check]
