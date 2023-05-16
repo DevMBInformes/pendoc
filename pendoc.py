@@ -66,7 +66,7 @@ def list_simple_dict(dictonary:dict, value_filter='', output=True)->tuple:
 #                       GLOBAL VARIABLES
 #########################################################################################
 
-user_name="devmb"
+user_name='{YOUR_USER_NAME}'
 file_data="data.conf"
 file_session="session.dat"
 notes_file = "notes.txt"
@@ -168,8 +168,8 @@ user = {
     'date' : ["", "time"],
     'context': ["Insert the context", "input", ''],
     'user': ["Input the user", "input", ''],
-    'target' : ['Insert number target', "input", ''],
     'password': ["Input the password", "input", ''],
+    'target' : ['Insert number target', "input", ''],
 }
 
 '''
@@ -247,9 +247,9 @@ def get_session_folder(paths:list, output=True):
     for folder in paths:
         array_sessions = os.listdir(folder)
         for session in array_sessions:
-            paths_sessions.append(folder + session)
+            paths_sessions.append(os.path.join(folder, session))
             if output == True:
-                log.info(f"[{counter}] - {session} ({folder + session})")
+                log.info(f"[{counter}] - {session} ({os.path.join(folder, session)})")
             counter +=1
     return counter, paths_sessions
 
@@ -261,11 +261,12 @@ def get_path_sessions(output=True):
 
 
 def set_session(session_name):
+    print(session_name)
     write_file(session_name, session_file)
 
 def create_enviroment(path):
     enviroment = make_input(session)
-    path = path + enviroment['name'] + "/"
+    path = os.path.join(path, enviroment['name'])
     set_session(path)
     if (os.path.isdir(path)):
         p.status("The session exists, open session")
@@ -443,7 +444,6 @@ def copy_image()->str:
 def dir_exist(path:str, create=True)->bool:
     """
     Check if a directory exists at the given path.
-    
     Args:
         path (str): The path of the directory to check.
         create (bool): If True, create the directory if it doesn't exist. 
@@ -476,6 +476,70 @@ def create_working_dirs(path:str):
 
 
     
+#########################################################################################
+#
+#                       FUNCTIONS SEARCH
+#########################################################################################
+SPACE_KEY=2
+fields_users_print = ['user', 'password', 'context', 'target']
+
+
+
+def print_section(section:str):
+    content_notes = open_notes()[0]
+    format_section(content_notes['users'], 'users')
+
+
+
+def create_format_user(item:dict, list_print:list, space=20)->str:
+    line_printer = ""
+    for field in list_print:
+        line_printer += f"{item[field]:{space}}|"
+    return line_printer
+
+
+def str_line_x(size:int, space=20)->str:
+   line  = "-"*((space * size) + SPACE_KEY + 2 + size)
+   return line
+
+
+
+def print_header(headers:list, space=20):
+   titles = ""
+   for title in headers:
+       titles += f"{title:^20}|"
+   line = str_line_x(len(headers), space)
+   line_x =  line + "\n" + "|ID|" + titles + "\n"
+   line_x += line 
+   return line_x
+
+
+def print_empty(count:int):
+    print("\n"*count)
+
+def printer_result(list_items:list):
+    print_empty(1)
+    print(print_header(list_items[0]))
+    for items in list_items[1:]:
+        print(items)
+    print(str_line_x(len(list_items[0])))
+    print_empty(2)
+
+
+
+def format_section(section:dict, name_section):
+    list_items = []
+    for key, value in section.items():
+        if name_section == 'users':
+            if len(list_items) == 0:
+                list_items.append(fields_users_print)
+            line_user = create_format_user(value, fields_users_print)
+            final_line = f"[{key:>{SPACE_KEY}}]{line_user}"
+            list_items.append(final_line)
+    printer_result(list_items)
+
+
+
 #########################################################################################
 #
 #                       FUNCTIONS ACTIONS
@@ -775,6 +839,10 @@ def add_port():
         write_file(json_content, get_path_notes())
 
 
+@click.command(name="list-notes", help="List notes")
+def list_notes():
+    print_section('')
+
 #########################################################################################
 #
 #                               INTRO
@@ -814,7 +882,7 @@ cli.add_command(change_target_subdomain)
 cli.add_command(change_target_url)
 cli.add_command(add_port)
 
-
+cli.add_command(list_notes)
 
 
 if __name__ == '__main__':
