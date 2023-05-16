@@ -66,7 +66,7 @@ def list_simple_dict(dictonary:dict, value_filter='', output=True)->tuple:
 #                       GLOBAL VARIABLES
 #########################################################################################
 
-user_name='{YOUR_USER_NAME}'
+user_name='devmb'
 file_data="data.conf"
 file_session="session.dat"
 notes_file = "notes.txt"
@@ -112,6 +112,7 @@ notes = {
     'users' : {},
     'vuln' : {},
     'comments': {},
+    'scripts' : {},
 }
 
 '''
@@ -189,6 +190,11 @@ comments = {
     'image': ["Copy the latest image from clipboard, press Y/n", "copy_image", ''],
 }
 
+scripts = {
+        'date' : ["", "time"],
+        'comment' : ["Input comment about script", "input", ""],
+        'file' : ["View", "input", ""]
+        }
 #########################################################################################
 #
 #                       ACTION OF FILES
@@ -481,20 +487,45 @@ def create_working_dirs(path:str):
 #                       FUNCTIONS SEARCH
 #########################################################################################
 SPACE_KEY=2
-fields_users_print = ['user', 'password', 'context', 'target']
+
+fields = {
+        'users' : ['user', 'password', 'context', 'target'],
+        'targets' : ['name_machine', 'os', 'ip'],
+        'actions_prompt' : ['cmd', 'note'],
+        'space' : {
+            'users' : {
+                'user' :20,
+                'password' : 20,
+                'context' : 20,
+                'target' : 20,
+                },
+            'action_prompt' : {
+                'cmd' : 20,
+                'note': 40,
+                'output' : 30,
+                },
+            'targets' : {
+                'name_machine' : 10,
+                'os' :10,
+                'ip' :15,
+                },
+            
+
+            }
+        }
 
 
 
 def print_section(section:str):
     content_notes = open_notes()[0]
-    format_section(content_notes['users'], 'users')
+    format_section(content_notes[section], section)
 
 
 
-def create_format_user(item:dict, list_print:list, space=20)->str:
+def create_format(item:dict, list_print:list, space=20)->str:
     line_printer = ""
     for field in list_print:
-        line_printer += f"{item[field]:{space}}|"
+        line_printer += f"{item[field][:space]:{space}}|"
     return line_printer
 
 
@@ -529,13 +560,13 @@ def printer_result(list_items:list):
 
 def format_section(section:dict, name_section):
     list_items = []
+    line_user = ""
     for key, value in section.items():
-        if name_section == 'users':
-            if len(list_items) == 0:
-                list_items.append(fields_users_print)
-            line_user = create_format_user(value, fields_users_print)
-            final_line = f"[{key:>{SPACE_KEY}}]{line_user}"
-            list_items.append(final_line)
+        if len(list_items) == 0:
+                list_items.append(fields[name_section])
+        line_user = create_format(value, fields[name_section])
+        final_line = f"[{key:>{SPACE_KEY}}]{line_user}"
+        list_items.append(final_line)
     printer_result(list_items)
 
 
@@ -841,8 +872,20 @@ def add_port():
 
 @click.command(name="list-notes", help="List notes")
 def list_notes():
-    print_section('')
+    print_section()
 
+@click.command(name="get-actp", help="List notes")
+def get_actp():
+    print_section('actions_prompt')
+
+@click.command(name="get-users", help="List notes")
+def get_users():
+    print_section('users')
+
+
+@click.command(name="get-targets", help="List notes")
+def get_targets():
+    print_section('targets')
 #########################################################################################
 #
 #                               INTRO
@@ -882,7 +925,14 @@ cli.add_command(change_target_subdomain)
 cli.add_command(change_target_url)
 cli.add_command(add_port)
 
-cli.add_command(list_notes)
+
+#gets y list
+cli.add_command(list_notes) # no habilitado del todo
+
+cli.add_command(get_users)
+cli.add_command(get_targets)
+cli.add_command(get_actp)
+
 
 
 if __name__ == '__main__':
