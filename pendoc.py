@@ -66,7 +66,7 @@ def list_simple_dict(dictonary:dict, value_filter='', output=True)->tuple:
 #                       GLOBAL VARIABLES
 #########################################################################################
 
-user_name='devmb'
+user_name='{YOUR_USER_NAME}'
 file_data="data.conf"
 file_session="session.dat"
 notes_file = "notes.txt"
@@ -74,7 +74,7 @@ notes_file = "notes.txt"
 config_path = os.path.join("/home",user_name, ".config","pendoc")
 config_file = os.path.join(config_path, file_data)
 session_file = os.path.join(config_path, file_session)
-path_captures=os.path.join("/home", user_name, "Pictures")
+path_captures=os.path.join("/home", user_name, "images", "captures")
 path_image = 'images'
 dirs_create = ['nmap', path_image, 'scripts', 'others']
 p = log.progress('Pendoc 0.2v')
@@ -499,77 +499,64 @@ fields = {
                 'context' : 20,
                 'target' : 20,
                 },
-            'action_prompt' : {
-                'cmd' : 20,
-                'note': 40,
-                'output' : 30,
+            'actions_prompt' : {
+                'cmd' : 40,
+                'note': 100,
+                'output' : 20,
+                'image' : 20,
                 },
             'targets' : {
-                'name_machine' : 10,
-                'os' :10,
-                'ip' :15,
+                'name_machine' : 15,
+                'os' :15,
+                'ip' :20,
                 },
-            
-
-            }
+            },
         }
 
 
 
 def print_section(section:str):
+    print("\n")
+    p.status(f"Print fields {section}")
     content_notes = open_notes()[0]
-    format_section(content_notes[section], section)
+    format_section_(content_notes[section], section)
+    print("\n")
 
 
-
-def create_format(item:dict, list_print:list, space=20)->str:
-    line_printer = ""
-    for field in list_print:
-        line_printer += f"{item[field][:space]:{space}}|"
-    return line_printer
-
-
-def str_line_x(size:int, space=20)->str:
-   line  = "-"*((space * size) + SPACE_KEY + 2 + size)
-   return line
+def print_line(character:str, space:int)->str:
+    #line  = "·"*((space * size) + SPACE_KEY + 2 + size)
+    total_space = (space + SPACE_KEY + 6)
+    line = character * total_space
+    return line
 
 
-
-def print_header(headers:list, space=20):
-   titles = ""
-   for title in headers:
-       titles += f"{title:^20}|"
-   line = str_line_x(len(headers), space)
-   line_x =  line + "\n" + "|ID|" + titles + "\n"
-   line_x += line 
-   return line_x
-
-
-def print_empty(count:int):
-    print("\n"*count)
-
-def printer_result(list_items:list):
-    print_empty(1)
-    print(print_header(list_items[0]))
-    for items in list_items[1:]:
-        print(items)
-    print(str_line_x(len(list_items[0])))
-    print_empty(2)
+def print_chart(name_section, content:list):
+    titles = "|[ID]"
+    total_space = 0
+    for title in fields[name_section]:
+        space = fields['space'][name_section][title]
+        total_space += space
+        titles += f"{title:^{space}}|"
+    divisor_line = print_line("_", total_space)
+    divisor_inner_line = print_line("-", total_space)
+    print(divisor_line)
+    print(titles)
+    print(divisor_line)
+    for item in content:
+        print(item)
+        print(divisor_inner_line)
 
 
-
-def format_section(section:dict, name_section):
+def format_section_(section:dict, name_section):
     list_items = []
-    line_user = ""
     for key, value in section.items():
-        if len(list_items) == 0:
-                list_items.append(fields[name_section])
-        line_user = create_format(value, fields[name_section])
-        final_line = f"[{key:>{SPACE_KEY}}]{line_user}"
+        final_line = f"|[{key:>{SPACE_KEY}}]"
+        for field in fields[name_section]:
+            space = fields['space'][name_section][field]
+            text = value[field][:space]
+            final_line += f"{text:<{space}}|"
         list_items.append(final_line)
-    printer_result(list_items)
-
-
+    print_chart(name_section, list_items)
 
 #########################################################################################
 #
