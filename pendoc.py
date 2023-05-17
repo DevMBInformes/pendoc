@@ -66,7 +66,7 @@ def list_simple_dict(dictonary:dict, value_filter='', output=True)->tuple:
 #                       GLOBAL VARIABLES
 #########################################################################################
 
-user_name='{YOUR_USER_NAME}'
+user_name='devmb'
 file_data="data.conf"
 file_session="session.dat"
 notes_file = "notes.txt"
@@ -492,7 +492,12 @@ fields = {
         'users' : ['user', 'password', 'context', 'target'],
         'targets' : ['name_machine', 'os', 'ip'],
         'actions_prompt' : ['cmd', 'note'],
+        'comments' : ['comment'],
         'space' : {
+            'comments' : {
+                'comment' : 80,
+                'image' : 20,
+                },
             'users' : {
                 'user' :20,
                 'password' : 20,
