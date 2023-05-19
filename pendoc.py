@@ -13,6 +13,7 @@ import json
 import time
 import re
 import datetime
+#import base64
 from pwn import log
 
 #########################################################################################
@@ -66,7 +67,7 @@ def list_simple_dict(dictonary:dict, value_filter='', output=True)->tuple:
 #                       GLOBAL VARIABLES
 #########################################################################################
 
-user_name='devmb'
+user_name='{YOUR_USER_NAME}'
 file_data="data.conf"
 file_session="session.dat"
 notes_file = "notes.txt"
@@ -78,7 +79,7 @@ path_captures=os.path.join("/home", user_name, "images", "captures")
 path_image = 'images'
 dirs_create = ['nmap', path_image, 'scripts', 'others']
 p = log.progress('Pendoc 0.2v')
-pentes_path=os.path.join("/home", user_name, "pentes")
+pentes_path=os.path.join("/home", user_name, "pentesting")
 format_time = "%Y-%d-%m-%H-%M-%S"
 
 
@@ -484,7 +485,7 @@ def create_working_dirs(path:str):
     
 #########################################################################################
 #
-#                       FUNCTIONS SEARCH
+#                       FUNCTIONS GETS AND SEARCH
 #########################################################################################
 SPACE_KEY=2
 
@@ -492,7 +493,10 @@ fields = {
         'users' : ['user', 'password', 'context', 'target'],
         'targets' : ['name_machine', 'os', 'ip'],
         'actions_prompt' : ['cmd', 'note'],
+        'actions_application' : ['application', 'action', 'note'],
         'comments' : ['comment'],
+        'vuln' : ['vuln', 'service', 'description'],
+        'scripts' : ['comment', 'file'],
         'space' : {
             'comments' : {
                 'comment' : 80,
@@ -510,10 +514,24 @@ fields = {
                 'output' : 20,
                 'image' : 20,
                 },
+            'actions_application' : {
+                'application' : 18,
+                'note' : 40,
+                'action': 30 ,
+            },
             'targets' : {
                 'name_machine' : 15,
                 'os' :15,
                 'ip' :20,
+                },
+            'vuln': {
+                'vuln' : 15,
+                'service' : 20,
+                'description': 40,
+                },
+            'scripts' : {
+               'comment' : 90,
+               'file' : 12,
                 },
             },
         }
@@ -637,6 +655,8 @@ def make_input(struc_dict: dict) -> dict:
                 break
             elif description[1] == 'copy_clipboard':
                 input('Press enter and copy to clipboad to row...')
+                #tmp_str = str(pyperclip.paste()[:-1]).encode('utf-8')
+                #tmp_struct_dict[name] = str(base64.b64encode(tmp_str))
                 tmp_str = pyperclip.paste()[:-1]
                 tmp_struct_dict[name] = tmp_str
                 break
@@ -864,7 +884,8 @@ def add_port():
 
 @click.command(name="list-notes", help="List notes")
 def list_notes():
-    print_section()
+    for key, item in notes.items():
+        print_section(key)
 
 @click.command(name="get-actp", help="List notes")
 def get_actp():
@@ -874,10 +895,26 @@ def get_actp():
 def get_users():
     print_section('users')
 
-
 @click.command(name="get-targets", help="List notes")
 def get_targets():
     print_section('targets')
+
+@click.command(name="get-vulns", help="List Vulns")
+def get_vulns():
+    print_section('vulns')
+
+@click.command(name="get-comments", help="List comments")
+def get_comments():
+    print_section('comments')
+
+@click.command(name="get-acta", help="List actions application")
+def get_acta():
+    print_section('actions_application')
+
+@click.command(name="get-scripts", help="List scripts")
+def get_scripts():
+    print_section('scripts')
+
 #########################################################################################
 #
 #                               INTRO
@@ -920,10 +957,14 @@ cli.add_command(add_port)
 
 #gets y list
 cli.add_command(list_notes) # no habilitado del todo
-
 cli.add_command(get_users)
 cli.add_command(get_targets)
 cli.add_command(get_actp)
+cli.add_command(get_acta)
+cli.add_command(get_vulns)
+cli.add_command(get_scripts)
+cli.add_command(get_comments)
+
 
 
 
