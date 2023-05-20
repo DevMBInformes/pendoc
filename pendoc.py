@@ -280,7 +280,7 @@ def create_enviroment(path):
     else:
         create_working_dirs(path)
         json_notes = convert_dict_to_json(notes)
-        write_file(json_notes, path + notes_file)
+        write_file(json_notes, os.path.join(path, notes_file))
         log.info('Create file notes')
         p.success("Directory created.. you can work...")
 
@@ -476,10 +476,9 @@ def dir_exist(path:str, create=True)->bool:
 
 def create_working_dirs(path:str):
     for new_dir in dirs_create:
-        dir_exist(path + new_dir)
-        log.info(f'Create new directory {path + new_dir}')
-
-        write_file('',path+notes_file)
+        dir_exist(os.path.join(path, new_dir))
+        log.info(f'Create new directory {os.path.join(path, new_dir)}')
+        write_file('',os.path.join(path,notes_file))
 
 
     
