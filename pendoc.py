@@ -23,8 +23,8 @@ from pwn import log
 
 def cmp_path_check(string:str)->bool:
     # Verificar si la cadena tiene un largo mayor a 10 caracteres
-    if len(string) > 10:
-        p.status("Max 10 characters")
+    if len(string) > 20:
+        p.status("Max 20 characters")
         return False
 
     # Verificar si la cadena contiene caracteres no permitidos
@@ -67,7 +67,7 @@ def list_simple_dict(dictonary:dict, value_filter='', output=True)->tuple:
 #                       GLOBAL VARIABLES
 #########################################################################################
 
-user_name='{YOUR_USER_NAME}'
+user_name='devmb'
 file_data="data.conf"
 file_session="session.dat"
 notes_file = "notes.txt"
@@ -496,6 +496,8 @@ fields = {
         'comments' : ['comment'],
         'vuln' : ['vuln', 'service', 'description'],
         'scripts' : ['comment', 'file'],
+        'individual' : ['key' ,'value'],
+        'ports' : ['port', 'type_port','service','version'],
         'space' : {
             'comments' : {
                 'comment' : 80,
@@ -531,6 +533,16 @@ fields = {
             'scripts' : {
                'comment' : 90,
                'file' : 12,
+                },
+            'individual' : {
+                'key' : 15,
+                'value' : 180,
+                },
+            'ports' : {
+                'port' : 6,
+                'type_port' : 25,
+                'service' : 15,
+                'version' : 25,
                 },
             },
         }
@@ -579,6 +591,30 @@ def format_section_(section:dict, name_section):
             final_line += f"{text:<{space}}|"
         list_items.append(final_line)
     print_chart(name_section, list_items)
+
+
+def print_individual_record(section:str, number_record:str, row=""):
+    notes, status = open_notes()
+    list_items = []
+    ports = False
+    if status and (number_record in notes[section]):
+        regis = notes[section][number_record]
+        if section == 'targets':
+            ports = regis['ports']
+            regis.pop('ports')
+        if row == "":
+            space_key = fields['space']['individual']['key']
+            space_value = fields['space']['individual']['value']
+            for key, value in regis.items():
+                final_line = (f"|[{number_record:^{SPACE_KEY}}]|{key:{space_key}}|{value:<{space_value}}|")
+                list_items.append(final_line)
+    else:
+        print("No hay registros")
+    print_chart('individual', list_items)
+
+    if ports:
+        format_section_(ports, 'ports')
+    
 
 #########################################################################################
 #
@@ -695,7 +731,7 @@ def list_section(section:str,value:str, show_field, output=True):
 
 def new_target_init()->dict:
     tmp_target = target.copy()
-    for key, value in tmp_target.items():
+    for key, _ in tmp_target.items():
         if key != 'ports':
             tmp_target[key] = ''
             if key == 'date':
@@ -883,7 +919,7 @@ def add_port():
 
 @click.command(name="list-notes", help="List notes")
 def list_notes():
-    for key, item in notes.items():
+    for key, _ in notes.items():
         print_section(key)
 
 @click.command(name="get-actp", help="List notes")
@@ -913,6 +949,15 @@ def get_acta():
 @click.command(name="get-scripts", help="List scripts")
 def get_scripts():
     print_section('scripts')
+
+
+@click.command(name="target", help="Get Individual comments")
+@click.option('-i', '--index', default=None, help="Specify index target" )
+def get_individual_targets(index):
+    if index is not None:
+        print_individual_record('targets', str(index))
+    else:
+        print("No se espefico el paramentro")
 
 #########################################################################################
 #
@@ -965,7 +1010,8 @@ cli.add_command(get_scripts)
 cli.add_command(get_comments)
 
 
-
+#individual records
+cli.add_command(get_individual_targets)
 
 if __name__ == '__main__':
     cli()
