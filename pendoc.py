@@ -67,7 +67,7 @@ def list_simple_dict(dictonary:dict, value_filter='', output=True)->tuple:
 #                       GLOBAL VARIABLES
 #########################################################################################
 
-user_name='devmb'
+user_name='{YOUR_USER_NAME}'
 file_data="data.conf"
 file_session="session.dat"
 notes_file = "notes.txt"
@@ -194,7 +194,7 @@ comments = {
 scripts = {
         'date' : ["", "time"],
         'comment' : ["Input comment about script", "input", ""],
-        'file' : ["View", "input", ""]
+        'file' : ["Name of file", "input", ""]
         }
 #########################################################################################
 #
@@ -549,12 +549,13 @@ fields = {
 
 
 
-def print_section(section:str):
+def print_section(section:str)->int:
     print("\n")
     p.status(f"Print fields {section}")
     content_notes = open_notes()[0]
-    format_section_(content_notes[section], section)
+    count_values = format_section(content_notes[section], section)
     print("\n")
+    return count_values
 
 
 def print_line(character:str, space:int)->str:
@@ -581,7 +582,7 @@ def print_chart(name_section, content:list):
         print(divisor_inner_line)
 
 
-def format_section_(section:dict, name_section):
+def format_section(section:dict, name_section):
     list_items = []
     for key, value in section.items():
         final_line = f"|[{key:>{SPACE_KEY}}]"
@@ -591,6 +592,7 @@ def format_section_(section:dict, name_section):
             final_line += f"{text:<{space}}|"
         list_items.append(final_line)
     print_chart(name_section, list_items)
+    return len(list_items)
 
 
 def print_individual_record(section:str, number_record:str, row=""):
@@ -606,6 +608,8 @@ def print_individual_record(section:str, number_record:str, row=""):
             space_key = fields['space']['individual']['key']
             space_value = fields['space']['individual']['value']
             for key, value in regis.items():
+                value = value.replace("\n", "")
+                value = value.replace("\t", "")
                 final_line = (f"|[{number_record:^{SPACE_KEY}}]|{key:{space_key}}|{value:<{space_value}}|")
                 list_items.append(final_line)
     else:
@@ -613,7 +617,7 @@ def print_individual_record(section:str, number_record:str, row=""):
     print_chart('individual', list_items)
 
     if ports:
-        format_section_(ports, 'ports')
+        format_section(ports, 'ports')
     
 
 #########################################################################################
@@ -742,6 +746,7 @@ def new_target_init()->dict:
 def rename_item(items):
     section, counter, actual_value, item = items.split("|-|")
     new_value = input(f"Input the new value for {item}, the actual value is: ({actual_value}): ")
+
     new_value = new_value[:-1] 
     notes, status = open_notes()
     if status:
@@ -769,7 +774,10 @@ def new_entry(base_dict:dict, section:str, create_make_input=True):
 
 def change_item(section:str, value_to_change:str, show:str, show_input:str ):
     sections = list_section(section, value_to_change, show_field=show)
-    select_list(sections, rename_item, show_input)
+    if sections[0] > 1:
+        select_list(sections, rename_item, show_input)
+    else:
+        rename_item(sections[1][0])
 
 
 def insert_note(section:str, content, new_content):
@@ -777,6 +785,49 @@ def insert_note(section:str, content, new_content):
     content[section][index] = new_content
     json_content = convert_dict_to_json(content)
     write_file(json_content, get_path_notes())
+
+
+def select_list2(section, string=''):
+    count_values = print_section(section) - 1
+    if count_values < 0:
+        print(f"No found values to {string} ")
+    else:
+        while True:
+            selection = input(f"Select a {string}: ").strip()
+            if selection.isdigit():  # Check if it's a digit
+                selection = int(selection)  # Convert to int
+                if selection < 0 or selection > count_values:  # If the selection is less than zero or greater han number_types
+                    log.info("Incorrect selection, please input a correct selection")
+                else:
+                    break
+            else:
+                log.info("Only numbers are valid")
+                p.status("Error, please enter number")
+        return selection
+    return count_values
+
+def get_individual(section, index, string, reg="", copy=False):
+    if index is not None:
+        if reg != "":
+            print_particular_reg(section, str(index), reg, copy)
+        else:
+            print_individual_record(section, str(index))
+    else:
+        selection = select_list2(section, string=string)
+        if selection >= 0:
+            if reg != "":
+                print_particular_reg(section, str(selection), reg, copy)
+
+            else:
+                print_individual_record(section, str(selection))
+
+
+def print_particular_reg(section, index:str, reg, copy=False):
+    notes = open_notes()[0]
+    print(notes[section][index][reg])
+    if copy:
+        p.status("Content in papperclip")
+        pyperclip.copy(notes[section][index][reg])
 #########################################################################################
 #
 #                       FUNCTIONS ENTRY
@@ -848,6 +899,9 @@ def new_target():
     new_entry(target, 'targets')
 
 
+@click.command(name='new-script', help="create a new link script")
+def new_script():
+    new_entry(scripts, 'scripts')
 
 @click.command(name='new-actp', help="create a new action prompt")
 def new_action_prompt():
@@ -904,6 +958,78 @@ def change_target_url():
     change_item('targets', 'url', 'name_machine', 'Select target to change the value of URL')
 
 
+####
+#CHANGE-ACTIONS PROMPT
+####
+@click.command(name="change-actp-cmd" ,help="Chance the value URL in the target select")
+def change_action_prompt_cmd():
+    change_item('actions_prompt', 'cmd', 'cmd', 'Select target')
+
+
+@click.command(name="change-actp-note" ,help="Chance the value URL in the target select")
+def change_action_prompt_note():
+    change_item('actions_prompt', 'note', 'cmd', 'Select target')
+
+@click.command(name="change-actp-output" ,help="Chance the value URL in the target select")
+def change_action_prompt_output():
+    change_item('actions_prompt', 'output', 'cmd', 'Select target')
+
+@click.command(name="change-actp-image" ,help="Chance the value URL in the target select")
+def change_action_prompt_image():
+    change_item('actions_prompt', 'image', 'cmd', 'Select target')
+
+
+
+####
+#CHANGE-ACTIONS APPLICATION
+####
+
+@click.command(name="change-acta-name" ,help="Chance the value URL in the target select")
+def change_action_application_application():
+    change_item('actions_application', 'application', 'application', 'Select target')
+
+
+
+@click.command(name="change-acta-action" ,help="Chance the value URL in the target select")
+def change_action_application_action():
+    change_item('actions_application', 'action', 'application', 'Select target')
+
+
+@click.command(name="change-acta-note" ,help="Chance the value URL in the target select")
+def change_action_application_note():
+    change_item('actions_application', 'note', 'application', 'Select target')
+
+
+@click.command(name="change-acta-image" ,help="Chance the value URL in the target select")
+def change_action_application_image():
+    change_item('actions_application', 'image', 'application', 'Select target')
+
+
+
+####
+#CHANGE-USER
+####
+
+@click.command(name="change-user-context" ,help="Chance the value URL in the target select")
+def change_user_context():
+    change_item('users', 'context', 'user', 'Select target')
+
+
+@click.command(name="change-user" ,help="Chance the value URL in the target select")
+def change_user():
+    change_item('users', 'user', 'user', 'Select target')
+
+@click.command(name="change-user-password" ,help="Chance the value URL in the target select")
+def change_user_password():
+    change_item('users', 'password', 'user', 'Select target')
+
+
+@click.command(name="change-user-target" ,help="Chance the value URL in the target select")
+def change_user_target():
+    change_item('users', 'target', 'user', 'Select target')
+
+
+
 @click.command(name="add-port", help="add new port")
 def add_port():
     sections = list_section('targets', 'name_machine', show_field='name_machine')
@@ -917,6 +1043,65 @@ def add_port():
         write_file(json_content, get_path_notes())
 
 
+####
+#CHANGE-VULN
+####
+
+@click.command(name="change-vuln" ,help="Chance the value URL in the target select")
+def change_vuln():
+    change_item('vuln', 'vuln', 'vuln', 'Select target')
+
+
+@click.command(name="change-vuln-service" ,help="Chance the value URL in the target select")
+def change_vuln_service():
+    change_item('vuln', 'service', 'vuln', 'Select target')
+
+
+
+@click.command(name="change-vuln-description" ,help="Chance the value URL in the target select")
+def change_vuln_description():
+    change_item('vuln', 'description', 'vuln', 'Select target')
+
+
+@click.command(name="change-vuln-url" ,help="Chance the value URL in the target select")
+def change_vuln_url():
+    change_item('vuln', 'url', 'vuln', 'Select target')
+
+
+####
+#CHANGE-VULN
+####
+
+@click.command(name="change-comment" ,help="Chance the value URL in the target select")
+def change_comment():
+    change_item('comments', 'comment', 'comment', 'Select target')
+
+
+
+@click.command(name="change-comment-image" ,help="Chance the value URL in the target select")
+def change_comment_image():
+    change_item('comments', 'image', 'comment', 'Select target')
+
+
+
+####
+#CHANGE-SCRIPTS
+####
+
+
+@click.command(name="change-script" ,help="Chance the value URL in the target select")
+def change_scripts():
+    change_item('scripts', 'comment', 'file', 'Select target')
+
+
+@click.command(name="change-script-file" ,help="Chance the value URL in the target select")
+def change_scripts_file():
+    change_item('scripts', 'file', 'file', 'Select target')
+
+
+####
+#List and gets
+####
 @click.command(name="list-notes", help="List notes")
 def list_notes():
     for key, _ in notes.items():
@@ -951,14 +1136,64 @@ def get_scripts():
     print_section('scripts')
 
 
-@click.command(name="target", help="Get Individual comments")
-@click.option('-i', '--index', default=None, help="Specify index target" )
-def get_individual_targets(index):
-    if index is not None:
-        print_individual_record('targets', str(index))
-    else:
-        print("No se espefico el paramentro")
+@click.command(name="target", help="Get Individual target")
+@click.option('-i', '--index', default=None, help="Specify index targe" )
+@click.option('-r', '--reg', default="", help="Specify one field to print" )
+@click.option('-c', '--copy', default=None, help="Copy if specify a reg")
+def get_individual_targets(index, reg, copy):
+    get_individual('targets', index, 'row target', reg, copy)
 
+
+
+@click.command(name="actp", help="Get Individual Action Prompt")
+@click.option('-i', '--index', default=None, help="Specify index action" )
+@click.option('-r', '--reg', default="", help="Specify one field to print" )
+@click.option('-c', '--copy', default=None, help="Copy if specify a reg")
+def get_individual_actp(index, reg, copy):
+    get_individual('actions_prompt', index, ' Action prompt', reg, copy)
+
+
+
+@click.command(name="acta", help="Get Individual Action application")
+@click.option('-i', '--index', default=None, help="Specify index action" )
+@click.option('-r', '--reg', default="", help="Specify one field to print" )
+@click.option('-c', '--copy', default=None, help="Copy if specify a reg")
+def get_individual_acta(index, reg, copy):
+    get_individual('actions_application', index, ' Action application', reg, copy)
+
+
+
+@click.command(name="comment", help="Get Individual comment")
+@click.option('-i', '--index', default=None, help="Specify index comment" )
+@click.option('-r', '--reg', default="", help="Specify one field to print" )
+@click.option('-c', '--copy', default=None, help="Copy if specify a reg")
+def get_individual_comment(index, reg, copy):
+    get_individual('comments', index, 'Comment', reg, copy)
+
+
+@click.command(name="user", help="Get Individual User")
+@click.option('-i', '--index', default=None, help="Specify index user" )
+@click.option('-r', '--reg', default="", help="Specify one field to print" )
+@click.option('-c', '--copy', default=None, help="Copy if specify a reg")
+def get_individual_user(index, reg, copy):
+    get_individual('users', index, 'User', reg, copy)
+
+
+@click.command(name="vuln", help="Get Individual vuln")
+@click.option('-i', '--index', default=None, help="Specify index vuln" )
+@click.option('-r', '--reg', default="", help="Specify one field to print" )
+@click.option('-c', '--copy', default=None, help="Copy if specify a reg")
+def get_individual_vuln(index, reg, copy):
+    get_individual('vuln', index, 'vulnerability', reg, copy)
+
+
+
+@click.command(name="script", help="Get Individual vuln")
+@click.option('-i', '--index', default=None, help="Specify index vuln" )
+@click.option('-r', '--reg', default="", help="Specify one field to print" )
+@click.option('-c', '--copy', default=None, help="Copy if specify a reg")
+def get_individual_script(index, reg, copy):
+    get_individual('scripts', index, 'code script', reg, copy)
 #########################################################################################
 #
 #                               INTRO
@@ -987,9 +1222,10 @@ cli.add_command(new_vuln) # new-vuln
 cli.add_command(new_user) # new-user
 cli.add_command(new_comment) # new_comment
 cli.add_command(new_target)
+cli.add_command(new_script)
 
 
-#target
+#change - target
 cli.add_command(change_target_name)
 cli.add_command(change_target_os)
 cli.add_command(change_target_ip)
@@ -997,6 +1233,47 @@ cli.add_command(change_target_domain)
 cli.add_command(change_target_subdomain)
 cli.add_command(change_target_url)
 cli.add_command(add_port)
+
+
+#change - Actions Prompt
+cli.add_command(change_action_prompt_cmd)
+cli.add_command(change_action_prompt_note)
+cli.add_command(change_action_prompt_output)
+cli.add_command(change_action_prompt_image)
+
+#change - Actions applications
+cli.add_command(change_action_application_note)
+cli.add_command(change_action_application_application)
+cli.add_command(change_action_application_action)
+cli.add_command(change_action_application_image)
+
+
+#change user
+
+cli.add_command(change_user)
+cli.add_command(change_user_context)
+cli.add_command(change_user_password)
+cli.add_command(change_user_target)
+
+
+#change vulns
+
+cli.add_command(change_vuln)
+cli.add_command(change_vuln_service)
+cli.add_command(change_vuln_description)
+cli.add_command(change_vuln_url)
+
+#change comment
+
+cli.add_command(change_comment)
+cli.add_command(change_comment_image)
+
+
+#change scripts
+
+
+cli.add_command(change_scripts)
+cli.add_command(change_scripts_file)
 
 
 #gets y list
@@ -1009,9 +1286,17 @@ cli.add_command(get_vulns)
 cli.add_command(get_scripts)
 cli.add_command(get_comments)
 
-
 #individual records
 cli.add_command(get_individual_targets)
+cli.add_command(get_individual_actp)
+cli.add_command(get_individual_acta)
+cli.add_command(get_individual_comment)
+cli.add_command(get_individual_user)
+cli.add_command(get_individual_vuln)
+cli.add_command(get_individual_script)
+
+
+
 
 if __name__ == '__main__':
     cli()
